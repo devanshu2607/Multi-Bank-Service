@@ -1,0 +1,162 @@
+services:
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+    ports:
+      - "2181:2181"
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,PLAINTEXT_HOST://0.0.0.0:29092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    ports:
+      - "9092:29092"
+
+  kafka-init:
+    image: confluentinc/cp-kafka:7.5.0
+    depends_on:
+      - kafka
+    command:
+      - /bin/sh
+      - -c
+      - |
+        until kafka-topics --bootstrap-server kafka:9092 --list; do
+          echo "Waiting for Kafka..."
+          sleep 3
+        done
+        kafka-topics --bootstrap-server kafka:9092 --create --if-not-exists --topic payment-events --partitions 3 --replication-factor 1
+        kafka-topics --bootstrap-server kafka:9092 --create --if-not-exists --topic ledger-events --partitions 3 --replication-factor 1
+        kafka-topics --bootstrap-server kafka:9092 --create --if-not-exists --topic notification-events --partitions 3 --replication-factor 1
+
+  auth-service:
+    build:
+      context: .
+      dockerfile: auth-service/Dockerfile
+    ports:
+      - "8081:8081"
+    env_file:
+      - .env
+    depends_on:
+      - redis
+
+  user-service:
+    build:
+      context: .
+      dockerfile: user-service/Dockerfile
+    ports:
+      - "8082:8082"
+    env_file:
+      - .env
+    depends_on:
+      - auth-service
+
+  bank-service:
+    build:
+      context: .
+      dockerfile: bank-service/Dockerfile
+    ports:
+      - "8083:8083"
+    env_file:
+      - .env
+    depends_on:
+      - kafka-init
+
+  upi-service:
+    build:
+      context: .
+      dockerfile: upi-service/Dockerfile
+    ports:
+      - "8084:8084"
+    env_file:
+      - .env
+    depends_on:
+      - bank-service
+      - redis
+
+  npci-service:
+    build:
+      context: .
+      dockerfile: npci-service/Dockerfile
+    ports:
+      - "8085:8085"
+    env_file:
+      - .env
+    depends_on:
+      - kafka-init
+      - upi-service
+      - redis
+
+  payment-service:
+    build:
+      context: .
+      dockerfile: payment-service/Dockerfile
+    ports:
+      - "8086:8086"
+    env_file:
+      - .env
+    depends_on:
+      - kafka-init
+      - npci-service
+
+  ledger-service:
+    build:
+      context: .
+      dockerfile: ledger-service/Dockerfile
+    ports:
+      - "8087:8087"
+    env_file:
+      - .env
+    depends_on:
+      - kafka-init
+      - payment-service
+
+  notification-service:
+    build:
+      context: .
+      dockerfile: notification-service/Dockerfile
+    ports:
+      - "8088:8088"
+    env_file:
+      - .env
+    depends_on:
+      - kafka-init
+      - payment-service
+
+  kong:
+    image: kong:3.7
+    environment:
+      KONG_DATABASE: "off"
+      KONG_DECLARATIVE_CONFIG: /opt/kong/kong.yml
+      KONG_PROXY_ACCESS_LOG: /dev/stdout
+      KONG_ADMIN_ACCESS_LOG: /dev/stdout
+      KONG_PROXY_ERROR_LOG: /dev/stderr
+      KONG_ADMIN_ERROR_LOG: /dev/stderr
+      KONG_ADMIN_LISTEN: 0.0.0.0:8001
+    ports:
+      - "8000:8000"
+      - "8001:8001"
+    volumes:
+      - ./kong.yml:/opt/kong/kong.yml
+    depends_on:
+      - auth-service
+      - user-service
+      - bank-service
+      - upi-service
+      - npci-service
+      - payment-service
+      - ledger-service
+      - notification-service

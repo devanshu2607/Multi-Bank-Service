@@ -1,0 +1,15 @@
+package com.studentbanking.common.model;
+
+public enum PaymentEventType {
+    PAYMENT_REQUESTED,
+    DEBIT_REQUESTED,
+    DEBIT_COMPLETED,
+    DEBIT_FAILED,
+    CREDIT_REQUESTED,
+    CREDIT_COMPLETED,
+    CREDIT_FAILED,
+    REFUND_REQUESTED,
+    REFUND_COMPLETED,
+    PAYMENT_COMPLETED,
+    PAYMENT_FAILED
+}
