@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
+import { useTheme } from "../contexts/ThemeContext";
 import { useToast } from "../components/layouts/DashboardLayout";
 import { bankApi, upiApi, paymentApi, ledgerApi } from "../services/api";
 import { motion, AnimatePresence } from "framer-motion";
@@ -39,6 +40,7 @@ import {
 
 export default function DashboardPage() {
   const { user } = useAuth();
+  const { isDark } = useTheme();
   const { showToast } = useToast();
   const navigate = useNavigate();
 
@@ -62,6 +64,7 @@ export default function DashboardPage() {
   const [newDefaultAccount, setNewDefaultAccount] = useState("");
   const [isPinModalOpen, setIsPinModalOpen] = useState(false);
   const [pinAction, setPinAction] = useState(null);
+  const [selectedChartBank, setSelectedChartBank] = useState("ALL");
 
   useEffect(() => {
     if (user?.id) {
@@ -206,40 +209,63 @@ export default function DashboardPage() {
   const totalAccounts = accounts.length;
 
   // Chart data
-  const spendingData = [
-    { name: "Week 1", amount: 1200 },
-    { name: "Week 2", amount: 4500 },
-    { name: "Week 3", amount: 2100 },
-    { name: "Week 4", amount: 6700 },
-  ];
-
-  const distributionData = accounts.map((acc, index) => ({
-    name: `${acc.bankCode} (${acc.accountNumber.slice(-4)})`,
-    value: acc.balance || 0
-  }));
-
-  const COLORS = ["#7C5CFF", "#4F8CFF", "#06B6D4", "#F59E0B", "#22C55E"];
-
-  // Mock Bills
-  const bills = [
-    { id: 1, name: "Vercel Cloud Host", due: "June 18, 2026", amount: 2490, category: "Web Services" },
-    { id: 2, name: "ACT Fiber Internet", due: "June 20, 2026", amount: 1049, category: "Utilities" },
-    { id: 3, name: "Apple One Family", due: "June 25, 2026", amount: 369, category: "Subscriptions" }
-  ];
-
-  const payBill = async (bill) => {
-    if (accounts.length === 0) {
-      showToast("No Account", "Create a bank account first", "warning");
-      return;
+  const getSpendingData = () => {
+    if (selectedChartBank === "ALL") {
+      return [
+        { name: "Week 1", amount: 1200 },
+        { name: "Week 2", amount: 4500 },
+        { name: "Week 3", amount: 2100 },
+        { name: "Week 4", amount: 6700 },
+      ];
     }
-    try {
-      await bankApi.debit(accounts[0].accountNumber, bill.amount, `Bill: ${bill.name}`, "INTER_BANK");
-      showToast("Bill Paid", `Paid ₹${bill.amount} for ${bill.name}`, "success");
-      loadDashboardData();
-    } catch (err) {
-      showToast("Payment Failed", "Failed to debit account", "danger");
-    }
+    
+    // Generate deterministic mock data based on the bank code
+    const seed = selectedChartBank.charCodeAt(0) + (selectedChartBank.charCodeAt(1) || 0);
+    return [
+      { name: "Week 1", amount: ((seed * 8) % 1500) + 300 },
+      { name: "Week 2", amount: ((seed * 15) % 3500) + 1000 },
+      { name: "Week 3", amount: ((seed * 5) % 1800) + 500 },
+      { name: "Week 4", amount: ((seed * 22) % 4500) + 1500 },
+    ];
   };
+
+  const spendingData = getSpendingData();
+
+  const getDistributionData = () => {
+    if (accounts.length === 0) return [];
+    
+    if (selectedChartBank === "ALL") {
+      return accounts.map((acc) => ({
+        name: `${acc.bankCode} (${acc.accountNumber.slice(-4)})`,
+        value: acc.balance || 0
+      }));
+    }
+    
+    const selectedAccs = accounts.filter(acc => acc.bankCode === selectedChartBank);
+    const selectedBalance = selectedAccs.reduce((sum, acc) => sum + (acc.balance || 0), 0);
+    const otherBalance = totalBalance - selectedBalance;
+    
+    const data = selectedAccs.map(acc => ({
+      name: `${acc.bankCode} (${acc.accountNumber.slice(-4)})`,
+      value: acc.balance || 0
+    }));
+    
+    if (otherBalance > 0) {
+      data.push({
+        name: "Other Banks Balance",
+        value: otherBalance
+      });
+    }
+    
+    return data;
+  };
+
+  const distributionData = getDistributionData();
+
+  const COLORS = isDark 
+    ? ["#7C5CFF", "#4F8CFF", "#06B6D4", "#F59E0B", "#22C55E"] 
+    : ["#16A34A", "#10B981", "#06B6D4", "#F59E0B", "#22C55E"];
+
 
   if (loading) {
     return (
@@ -368,10 +394,14 @@ export default function DashboardPage() {
                   <div className="flex items-start justify-between">
                     <div className="space-y-1">
                       <span className="text-xs font-bold uppercase text-brand-muted tracking-widest">{acc.bankCode} Global</span>
-                      <p className="text-xs font-mono text-white/40">•••• {acc.accountNumber.slice(-4)}</p>
+                      <p className="text-xs font-mono text-gray-900/40 dark:text-white/40">•••• {acc.accountNumber.slice(-4)}</p>
                     </div>
-                    <div className="w-10 h-8 rounded-lg bg-yellow-600/20 border border-yellow-500/20 flex items-center justify-center relative">
-                      <span className="w-3.5 h-4 bg-yellow-500/30 rounded-sm" />
+                    {/* Premium EMV Card Chip Decoration */}
+                    <div className="w-9 h-7 rounded-[5px] bg-gradient-to-br from-amber-300 via-amber-400 to-amber-600 p-[1px] shadow-sm relative overflow-hidden flex flex-col justify-between border border-amber-500/20">
+                      <div className="absolute inset-y-0 left-1/3 w-[1px] bg-amber-950/20" />
+                      <div className="absolute inset-y-0 right-1/3 w-[1px] bg-amber-950/20" />
+                      <div className="absolute inset-x-0 top-1/2 h-[1px] bg-amber-950/20 -translate-y-1/2" />
+                      <div className="absolute w-2.5 h-2.5 bg-amber-300/40 rounded-[2px] top-[7.5px] left-[12.5px] border border-amber-950/15" />
                     </div>
                   </div>
 
@@ -391,7 +421,7 @@ export default function DashboardPage() {
                     </div>
                     <Link 
                       to={`/accounts/${acc.accountNumber}`}
-                      className="text-xs font-bold text-[#4F8CFF] hover:underline"
+                      className="text-xs font-bold text-brand-secondary hover:underline"
                     >
                       Details &rarr;
                     </Link>
@@ -558,10 +588,27 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         
         {/* Analytics Charts */}
-        <div className="lg:col-span-8 p-6 rounded-3xl glass-panel border border-white/5 space-y-6">
-          <div className="flex items-center justify-between">
+        <div className="lg:col-span-12 p-6 rounded-3xl glass-panel border border-white/5 space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <h3 className="font-bold text-lg text-white">Spend & Balance Analysis</h3>
-            <span className="text-[10px] font-bold text-brand-primary uppercase tracking-widest">Realtime charts</span>
+            <div className="flex items-center gap-3">
+              {accounts.length > 0 && (
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-bold text-brand-muted uppercase tracking-wider">Filter Bank:</span>
+                  <select 
+                    value={selectedChartBank}
+                    onChange={(e) => setSelectedChartBank(e.target.value)}
+                    className="h-9 px-3.5 bg-white/5 border border-white/10 rounded-xl text-xs text-white placeholder-brand-muted focus:outline-none focus:border-brand-primary/40 transition-all cursor-pointer"
+                  >
+                    <option value="ALL">All Banks</option>
+                    {[...new Set(accounts.map(acc => acc.bankCode))].map(bankCode => (
+                      <option key={bankCode} value={bankCode}>{bankCode}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+              <span className="text-[10px] font-bold text-brand-primary uppercase tracking-widest hidden sm:inline">Realtime charts</span>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
@@ -571,19 +618,23 @@ export default function DashboardPage() {
                 <AreaChart data={spendingData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                   <defs>
                     <linearGradient id="colorSpend" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#7C5CFF" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="#7C5CFF" stopOpacity={0}/>
+                      <stop offset="5%" stopColor={isDark ? "#7C5CFF" : "#16A34A"} stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor={isDark ? "#7C5CFF" : "#16A34A"} stopOpacity={0}/>
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" />
+                  <CartesianGrid strokeDasharray="3 3" stroke={isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.05)"} />
                   <XAxis dataKey="name" stroke="#94A3B8" fontSize={10} tickLine={false} />
                   <YAxis stroke="#94A3B8" fontSize={10} tickLine={false} />
                   <Tooltip 
-                    contentStyle={{ backgroundColor: "rgba(17,24,39,0.9)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "12px" }}
+                    contentStyle={{ 
+                      backgroundColor: isDark ? "rgba(13, 13, 18, 0.95)" : "rgba(255, 255, 255, 0.95)", 
+                      border: isDark ? "1px solid rgba(255, 255, 255, 0.1)" : "1px solid rgba(0, 0, 0, 0.1)", 
+                      borderRadius: "12px" 
+                    }}
                     labelStyle={{ color: "#94A3B8", fontSize: "11px", fontWeight: "bold" }}
-                    itemStyle={{ color: "#fff", fontSize: "12px" }}
+                    itemStyle={{ color: isDark ? "#fff" : "#1E293B", fontSize: "12px" }}
                   />
-                  <Area type="monotone" dataKey="amount" stroke="#7C5CFF" strokeWidth={2} fillOpacity={1} fill="url(#colorSpend)" />
+                  <Area type="monotone" dataKey="amount" stroke={isDark ? "#7C5CFF" : "#16A34A"} strokeWidth={2} fillOpacity={1} fill="url(#colorSpend)" />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
@@ -609,8 +660,12 @@ export default function DashboardPage() {
                           ))}
                         </Pie>
                         <Tooltip
-                          contentStyle={{ backgroundColor: "rgba(17,24,39,0.9)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "12px" }}
-                          itemStyle={{ color: "#fff", fontSize: "10px" }}
+                          contentStyle={{ 
+                            backgroundColor: isDark ? "rgba(17, 24, 39, 0.95)" : "rgba(255, 255, 255, 0.95)", 
+                            border: isDark ? "1px solid rgba(255, 255, 255, 0.1)" : "1px solid rgba(0, 0, 0, 0.1)", 
+                            borderRadius: "12px" 
+                          }}
+                          itemStyle={{ color: isDark ? "#fff" : "#1E293B", fontSize: "10px" }}
                         />
                       </PieChart>
                     </ResponsiveContainer>
@@ -631,36 +686,6 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Upcoming Bills & Payables */}
-        <div className="lg:col-span-4 p-6 rounded-3xl glass-panel border border-white/5 space-y-4">
-          <div className="flex items-center gap-2">
-            <Wifi size={18} className="text-brand-warning" />
-            <h3 className="font-bold text-lg text-white">Upcoming Payables</h3>
-          </div>
-
-          <div className="space-y-3.5">
-            {bills.map((bill) => (
-              <div 
-                key={bill.id}
-                className="p-3.5 rounded-2xl bg-white/[0.02] border border-white/5 flex items-center justify-between gap-4"
-              >
-                <div>
-                  <h4 className="text-xs font-bold text-white">{bill.name}</h4>
-                  <p className="text-[10px] text-brand-muted mt-0.5">Due {bill.due} • {bill.category}</p>
-                </div>
-                <div className="text-right flex flex-col items-end gap-1.5">
-                  <span className="text-xs font-bold text-white">₹{bill.amount}</span>
-                  <button 
-                    onClick={() => payBill(bill)}
-                    className="h-7 px-3.5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 text-[9px] font-bold transition-all text-white"
-                  >
-                    Pay
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
 
       </div>
 

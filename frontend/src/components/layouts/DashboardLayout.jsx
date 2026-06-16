@@ -1,6 +1,7 @@
 import React, { useState, useEffect, createContext, useContext } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
+import { useTheme } from "../../contexts/ThemeContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   LayoutDashboard, 
@@ -18,9 +19,12 @@ import {
   Menu,
   Settings,
   X,
-  TrendingUp
+  Landmark,
+  Sun,
+  Moon
 } from "lucide-react";
 import { notificationApi } from "../../services/api";
+import Logo from "../Logo";
 
 const ToastContext = createContext(null);
 
@@ -28,6 +32,7 @@ export const useToast = () => useContext(ToastContext);
 
 export default function DashboardLayout({ children }) {
   const { user, logout } = useAuth();
+  const { theme, toggleTheme, isDark } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
   
@@ -67,6 +72,21 @@ export default function DashboardLayout({ children }) {
     }
   }, [user]);
 
+  // Viewport scroll locking
+  useEffect(() => {
+    document.documentElement.style.overflow = "hidden";
+    document.documentElement.style.height = "100%";
+    document.body.style.overflow = "hidden";
+    document.body.style.height = "100%";
+    
+    return () => {
+      document.documentElement.style.overflow = "";
+      document.documentElement.style.height = "";
+      document.body.style.overflow = "";
+      document.body.style.height = "";
+    };
+  }, []);
+
   const navItems = [
     { name: "Dashboard", path: "/dashboard", icon: LayoutDashboard },
     { name: "Accounts", path: "/accounts", icon: Wallet },
@@ -85,14 +105,14 @@ export default function DashboardLayout({ children }) {
 
   return (
     <ToastContext.Provider value={{ showToast }}>
-      <div className="min-h-screen bg-brand-bg text-white flex flex-col relative overflow-hidden">
+      <div className="h-screen bg-transparent dark:bg-brand-bg text-gray-900 dark:text-white flex flex-col relative overflow-hidden">
         
         {/* Glow circles in layout */}
         <div className="absolute top-[-20%] left-[-10%] w-[600px] height-[600px] rounded-full bg-brand-primary/5 blur-[120px] pointer-events-none z-0" />
         <div className="absolute bottom-[-20%] right-[-10%] w-[600px] height-[600px] rounded-full bg-brand-secondary/5 blur-[120px] pointer-events-none z-0" />
 
         {/* 1. Sticky Glass Navbar */}
-        <header className="sticky top-0 z-50 h-[72px] w-full glass-nav flex items-center justify-between px-6 z-40">
+        <header className="sticky top-0 z-50 h-[72px] w-full glass-nav flex items-center justify-between px-6">
           {/* Left: Logo */}
           <div className="flex items-center gap-3">
             <button 
@@ -102,11 +122,11 @@ export default function DashboardLayout({ children }) {
               <Menu size={20} />
             </button>
             <Link to="/dashboard" className="flex items-center gap-2.5">
-              <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center glow-primary">
-                <TrendingUp size={22} className="text-white" />
+              <div className="w-10 h-10 rounded-xl border-2 border-green-600 dark:border-brand-primary flex items-center justify-center bg-transparent">
+                <Logo size={22} className="text-green-600 dark:text-brand-primary" />
               </div>
-              <span className="font-bold text-xl tracking-tight bg-gradient-to-r from-white via-white to-brand-secondary bg-clip-text text-transparent hidden sm:inline">
-                AuraBank
+              <span className="font-bold text-xl tracking-tight bg-gradient-to-r from-gray-900 via-gray-900 to-brand-secondary dark:from-white dark:via-white dark:to-brand-secondary bg-clip-text text-transparent hidden sm:inline">
+                Zero
               </span>
             </Link>
           </div>
@@ -138,6 +158,15 @@ export default function DashboardLayout({ children }) {
               <Settings size={18} />
             </Link>
 
+            {/* Global Theme Toggle */}
+            <button 
+              onClick={toggleTheme}
+              className="p-2.5 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 transition-colors"
+              title={`Switch to ${isDark ? "Light" : "Dark"} Mode`}
+            >
+              {isDark ? <Sun size={18} /> : <Moon size={18} />}
+            </button>
+
             {/* Profile Dropdown */}
             <div className="relative">
               <button 
@@ -161,7 +190,7 @@ export default function DashboardLayout({ children }) {
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: 10, scale: 0.95 }}
                       transition={{ duration: 0.15 }}
-                      className="absolute right-0 mt-2.5 w-56 rounded-2xl glass-panel p-2 shadow-2xl z-50"
+                      className="absolute right-0 mt-2.5 w-56 rounded-2xl bg-brand-surface dark:bg-brand-surface bg-white border border-white/5 dark:border-white/5 shadow-2xl p-2 z-50"
                     >
                       <div className="px-3 py-2 border-b border-white/5 mb-1.5">
                         <p className="text-sm font-semibold truncate">{user?.fullName}</p>
@@ -202,10 +231,10 @@ export default function DashboardLayout({ children }) {
         </header>
 
         {/* Outer Wrapper for Sidebar + Content */}
-        <div className="flex flex-1 z-10">
+        <div className="flex flex-1 min-h-0 overflow-hidden z-10">
           
           {/* 2. Left Sidebar (Desktop) */}
-          <aside className={`hidden lg:flex flex-col glass-sidebar py-6 px-4 transition-all duration-300 relative z-30 ${sidebarCollapsed ? "w-20" : "w-64"}`}>
+          <aside className={`hidden lg:flex flex-col glass-sidebar py-6 px-4 transition-all duration-300 relative z-30 h-full ${sidebarCollapsed ? "w-20" : "w-64"}`}>
             
             {/* Collapse Trigger */}
             <button 
@@ -216,7 +245,7 @@ export default function DashboardLayout({ children }) {
             </button>
 
             {/* Nav Links */}
-            <nav className="flex-1 flex flex-col gap-1.5">
+            <nav className="flex-1 flex flex-col gap-1.5 overflow-y-auto pr-1">
               {navItems.map((item) => {
                 const isActive = location.pathname === item.path;
                 const Icon = item.icon;
@@ -244,10 +273,9 @@ export default function DashboardLayout({ children }) {
               })}
             </nav>
 
-            {/* Logout button in sidebar */}
             <button 
               onClick={handleLogout}
-              className={`flex items-center gap-3.5 px-3.5 py-3 rounded-2xl text-sm font-medium text-brand-danger border border-transparent hover:bg-brand-danger/10 transition-all mt-auto`}
+              className={`flex items-center gap-3.5 px-3.5 py-3 rounded-2xl text-sm font-medium text-brand-danger border border-transparent hover:bg-brand-danger/10 transition-all mt-4`}
             >
               <LogOut size={18} />
               {!sidebarCollapsed && <span>Logout</span>}
@@ -273,12 +301,12 @@ export default function DashboardLayout({ children }) {
                   className="fixed top-0 bottom-0 left-0 w-64 glass-panel border-r border-white/10 z-50 p-6 flex flex-col gap-6 lg:hidden"
                 >
                   <div className="flex items-center justify-between">
-                    <span className="font-bold text-lg text-brand-primary glow-text">AuraBank</span>
+                    <span className="font-bold text-lg text-brand-primary glow-text">Zero</span>
                     <button onClick={() => setMobileMenuOpen(false)} className="p-1 rounded-lg hover:bg-white/5">
                       <X size={20} />
                     </button>
                   </div>
-                  <nav className="flex flex-col gap-1.5">
+                  <nav className="flex-1 flex flex-col gap-1.5 overflow-y-auto pr-1">
                     {navItems.map((item) => {
                       const isActive = location.pathname === item.path;
                       const Icon = item.icon;

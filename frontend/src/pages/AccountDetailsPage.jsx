@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
+import { useTheme } from "../contexts/ThemeContext";
 import { useToast } from "../components/layouts/DashboardLayout";
 import { bankApi, ledgerApi } from "../services/api";
 import { motion, AnimatePresence } from "framer-motion";
@@ -30,6 +31,7 @@ import {
 export default function AccountDetailsPage() {
   const { accountNumber } = useParams();
   const { user } = useAuth();
+  const { isDark } = useTheme();
   const { showToast } = useToast();
   const navigate = useNavigate();
 
@@ -230,12 +232,16 @@ export default function AccountDetailsPage() {
             {chartData.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData} margin={{ top: 10, right: 0, left: -25, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" />
+                  <CartesianGrid strokeDasharray="3 3" stroke={isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.05)"} />
                   <XAxis dataKey="name" stroke="#94A3B8" fontSize={9} tickLine={false} />
                   <YAxis stroke="#94A3B8" fontSize={9} tickLine={false} />
                   <Tooltip 
-                    contentStyle={{ backgroundColor: "rgba(17,24,39,0.9)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "12px" }}
-                    itemStyle={{ color: "#fff", fontSize: "11px" }}
+                    contentStyle={{ 
+                      backgroundColor: isDark ? "rgba(17, 24, 39, 0.95)" : "rgba(255, 255, 255, 0.95)", 
+                      border: isDark ? "1px solid rgba(255, 255, 255, 0.1)" : "1px solid rgba(0, 0, 0, 0.1)", 
+                      borderRadius: "12px" 
+                    }}
+                    itemStyle={{ color: isDark ? "#fff" : "#1E293B", fontSize: "11px" }}
                   />
                   <Bar dataKey="Amount" radius={[4, 4, 0, 0]}>
                     {chartData.map((entry, index) => (

@@ -1,5 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 export default {
+  darkMode: "class",
   content: [
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
@@ -8,16 +9,16 @@ export default {
     extend: {
       colors: {
         brand: {
-          bg: "#090E1A",
-          surface: "#111827",
-          glass: "rgba(17, 24, 39, 0.65)",
-          primary: "#7C5CFF",
-          secondary: "#4F8CFF",
+          bg: "rgba(var(--brand-bg), <alpha-value>)",
+          surface: "rgba(var(--brand-surface), <alpha-value>)",
+          glass: "rgba(var(--brand-glass), <alpha-value>)",
+          primary: "rgba(var(--brand-primary), <alpha-value>)",
+          secondary: "rgba(var(--brand-secondary), <alpha-value>)",
           success: "#22C55E",
           warning: "#F59E0B",
           danger: "#EF4444",
-          muted: "#94A3B8",
-          border: "rgba(255, 255, 255, 0.08)",
+          muted: "rgba(var(--brand-muted), <alpha-value>)",
+          border: "rgba(var(--brand-border), <alpha-value>)",
         }
       },
       fontFamily: {

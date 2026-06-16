@@ -4,10 +4,12 @@ import { useToast } from "../components/layouts/DashboardLayout";
 import { upiApi, bankApi } from "../services/api";
 import { motion, AnimatePresence } from "framer-motion";
 import { QrCode, Building, Info, Smartphone, Plus, Check, CheckCircle2 } from "lucide-react";
+import { useTheme } from "../contexts/ThemeContext";
 
 export default function UpiPage() {
   const { user } = useAuth();
   const { showToast } = useToast();
+  const { isDark } = useTheme();
 
   const [upiProfiles, setUpiProfiles] = useState([]);
   const [accounts, setAccounts] = useState([]);
@@ -84,34 +86,34 @@ export default function UpiPage() {
     return (
       <svg className="w-40 h-40 bg-white p-2.5 rounded-2xl shadow-xl" viewBox="0 0 100 100">
         {/* Border / alignment patterns mock */}
-        <rect x="0" y="0" width="25" height="25" fill="#090E1A" />
+        <rect x="0" y="0" width="25" height="25" fill="#000000" />
         <rect x="3" y="3" width="19" height="19" fill="#fff" />
-        <rect x="6" y="6" width="13" height="13" fill="#090E1A" />
+        <rect x="6" y="6" width="13" height="13" fill="#000000" />
 
-        <rect x="75" y="0" width="25" height="25" fill="#090E1A" />
+        <rect x="75" y="0" width="25" height="25" fill="#000000" />
         <rect x="78" y="3" width="19" height="19" fill="#fff" />
-        <rect x="81" y="6" width="13" height="13" fill="#090E1A" />
+        <rect x="81" y="6" width="13" height="13" fill="#000000" />
 
-        <rect x="0" y="75" width="25" height="25" fill="#090E1A" />
+        <rect x="0" y="75" width="25" height="25" fill="#000000" />
         <rect x="3" y="78" width="19" height="19" fill="#fff" />
-        <rect x="6" y="81" width="13" height="13" fill="#090E1A" />
+        <rect x="6" y="81" width="13" height="13" fill="#000000" />
 
         {/* Center Aura Icon */}
-        <rect x="42" y="42" width="16" height="16" rx="4" fill="#7C5CFF" />
+        <rect x="42" y="42" width="16" height="16" rx="4" fill={isDark ? "#7C5CFF" : "#16A34A"} />
 
         {/* Random dots mock */}
-        <rect x="35" y="5" width="5" height="15" fill="#090E1A" />
-        <rect x="45" y="15" width="15" height="5" fill="#090E1A" />
-        <rect x="65" y="20" width="5" height="10" fill="#090E1A" />
-        <rect x="5" y="35" width="15" height="5" fill="#090E1A" />
-        <rect x="25" y="45" width="10" height="10" fill="#090E1A" />
-        <rect x="5" y="55" width="5" height="15" fill="#090E1A" />
-        <rect x="70" y="35" width="15" height="5" fill="#090E1A" />
-        <rect x="85" y="45" width="10" height="10" fill="#090E1A" />
-        <rect x="35" y="65" width="15" height="5" fill="#090E1A" />
-        <rect x="55" y="75" width="5" height="15" fill="#090E1A" />
-        <rect x="75" y="65" width="5" height="10" fill="#090E1A" />
-        <rect x="25" y="85" width="15" height="5" fill="#090E1A" />
+        <rect x="35" y="5" width="5" height="15" fill="#000000" />
+        <rect x="45" y="15" width="15" height="5" fill="#000000" />
+        <rect x="65" y="20" width="5" height="10" fill="#000000" />
+        <rect x="5" y="35" width="15" height="5" fill="#000000" />
+        <rect x="25" y="45" width="10" height="10" fill="#000000" />
+        <rect x="5" y="55" width="5" height="15" fill="#000000" />
+        <rect x="70" y="35" width="15" height="5" fill="#000000" />
+        <rect x="85" y="45" width="10" height="10" fill="#000000" />
+        <rect x="35" y="65" width="15" height="5" fill="#000000" />
+        <rect x="55" y="75" width="5" height="15" fill="#000000" />
+        <rect x="75" y="65" width="5" height="10" fill="#000000" />
+        <rect x="25" y="85" width="15" height="5" fill="#000000" />
       </svg>
     );
   };
@@ -272,7 +274,7 @@ export default function UpiPage() {
             <button
               type="submit"
               disabled={creating || accounts.length === 0}
-              className="w-full h-11 rounded-2xl gradient-primary font-semibold flex items-center justify-center gap-2 shadow-lg glow-primary hover:brightness-110 active:scale-95 transition-all text-white disabled:opacity-50"
+              className="w-full h-11 rounded-2xl font-semibold flex items-center justify-center gap-2 active:scale-95 transition-all disabled:opacity-50 btn-interactive-accent"
             >
               {creating ? (
                 <div className="w-5 h-5 rounded-full border-t-2 border-white animate-spin" />

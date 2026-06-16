@@ -297,7 +297,7 @@ export default function TransfersPage() {
 
               <button
                 type="submit"
-                className="w-full h-12 rounded-2xl gradient-primary font-semibold flex items-center justify-center gap-2 shadow-lg glow-primary hover:brightness-110 active:scale-95 transition-all text-white"
+                className="w-full h-12 rounded-2xl font-semibold flex items-center justify-center gap-2 active:scale-95 transition-all btn-interactive-accent"
               >
                 Send Inter-Bank Funds
                 <ArrowRight size={16} />

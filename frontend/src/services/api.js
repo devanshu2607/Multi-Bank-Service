@@ -5,7 +5,7 @@ const api = axios.create({
 });
 
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("accessToken");
+  const token = sessionStorage.getItem("accessToken");
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -25,24 +25,24 @@ export default api;
 export const banks = ["SBI", "HDFC", "ICICI", "AXIS", "PNB", "KOTAK", "BOB"];
 
 export function getSession() {
-  const raw = localStorage.getItem("bankingSession");
+  const raw = sessionStorage.getItem("bankingSession");
   return raw ? JSON.parse(raw) : null;
 }
 
 export function saveSession(session) {
-  localStorage.setItem("bankingSession", JSON.stringify(session));
+  sessionStorage.setItem("bankingSession", JSON.stringify(session));
   if (session?.accessToken) {
-    localStorage.setItem("accessToken", session.accessToken);
+    sessionStorage.setItem("accessToken", session.accessToken);
   }
   if (session?.refreshToken) {
-    localStorage.setItem("refreshToken", session.refreshToken);
+    sessionStorage.setItem("refreshToken", session.refreshToken);
   }
 }
 
 export function clearSession() {
-  localStorage.removeItem("bankingSession");
-  localStorage.removeItem("accessToken");
-  localStorage.removeItem("refreshToken");
+  sessionStorage.removeItem("bankingSession");
+  sessionStorage.removeItem("accessToken");
+  sessionStorage.removeItem("refreshToken");
 }
 
 // --- API Helpers for Microservices ---

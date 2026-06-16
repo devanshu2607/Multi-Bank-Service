@@ -15,7 +15,7 @@ export default function HelpPage() {
   // Live Chat Simulator
   const [chatOpen, setChatOpen] = useState(false);
   const [chatMessages, setChatMessages] = useState([
-    { sender: "agent", text: "Hello! Welcome to AuraBank Support. How can we help you with the simulation today?" }
+    { sender: "agent", text: "Hello! Welcome to Zero Support. How can we help you with the simulation today?" }
   ]);
   const [newChatMsg, setNewChatMsg] = useState("");
 
@@ -23,7 +23,7 @@ export default function HelpPage() {
     { q: "How many simulated bank accounts can I link?", a: "The simulator enforces a limit of up to 3 bank accounts total per user profile, and only 1 account per specific bank license (SBI, HDFC, ICICI, etc.)." },
     { q: "What is a Saga Coordinator?", a: "Saga coordinates multi-service transactions. In payments, it sends a debit event to Bank Service, a credit event to target, and monitors rollback events if anything fails." },
     { q: "Can I generate default UPI handles?", a: "Yes, once a bank account is linked, register a handle like name@aura. All phone-number routing queries will resolve to your default bank account." },
-    { q: "What should I do if a payment fails?", a: "AuraBank automatically coordinates compensation rollbacks if a ledger credit fails, restoring the source balance instantly." },
+    { q: "What should I do if a payment fails?", a: "Zero automatically coordinates compensation rollbacks if a ledger credit fails, restoring the source balance instantly." },
   ];
 
   const filteredFaqs = faqs.filter(
@@ -50,17 +50,99 @@ export default function HelpPage() {
     e.preventDefault();
     if (!newChatMsg.trim()) return;
 
-    const userMessage = { sender: "user", text: newChatMsg };
+    const userText = newChatMsg.trim();
+    const userMessage = { sender: "user", text: userText };
     setChatMessages((prev) => [...prev, userMessage]);
     setNewChatMsg("");
 
-    // Simulate Agent response
+    // Identify response based on specific allowed questions
+    let responseText = "Sorry, I can only answer specific questions. Please click one of the quick option pills above or ask about: Link Accounts, Setup UPI PIN, Saga Workflows, VPA Mappings, or Bank Status.";
+    let bankOptions = null;
+    const lower = userText.toLowerCase();
+
+    // Check if user specified a bank status singly
+    const bankMatch = ["sbi", "hdfc", "icici", "axis", "pnb", "kotak", "bob"].find(b => lower.includes(b));
+
+    if (lower.includes("status") && bankMatch) {
+      const bankUpper = bankMatch.toUpperCase();
+      const bankStatuses = {
+        SBI: "State Bank of India Simulator is online. Status: Operational (100% SLA). Clearing routes are stable.",
+        HDFC: "HDFC Bank Simulator is online. Status: Operational (99.98% SLA). Direct settlement routes active.",
+        ICICI: "ICICI Bank Simulator is online. Status: Operational (100% SLA). Instant UPI settlement is active.",
+        AXIS: "Axis Bank Simulator is online. Status: Operational (99.95% SLA). Clearing queue latency is nominal.",
+        PNB: "Punjab National Bank Simulator is online. Status: Operational (99.91% SLA). Regional routers active.",
+        KOTAK: "Kotak Mahindra Bank Simulator is online. Status: Operational (99.99% SLA). Settlement services active.",
+        BOB: "Bank of Baroda Simulator is online. Status: Operational (99.88% SLA). Secondary routers operational."
+      };
+      const base = bankStatuses[bankUpper] || "Simulator is online and operational.";
+      const latency = Math.floor(Math.random() * 15) + 10;
+      responseText = `${base} Latency: ${latency}ms. Connection status: Healthy.`;
+    } else if (lower.includes("status") && (lower.includes("bank") || lower.includes("all"))) {
+      responseText = "Select a bank to check its current simulation status singly:";
+      bankOptions = ["SBI", "HDFC", "ICICI", "AXIS", "PNB", "KOTAK", "BOB"];
+    } else if (lower.includes("account") || lower.includes("link")) {
+      responseText = "To link a bank account, go to the 'Accounts' page, click 'Link Bank Account', choose a bank (SBI, HDFC, etc.) and enter an opening balance.";
+    } else if (lower.includes("pin") || lower.includes("security")) {
+      responseText = "To set or reset your 4-digit UPI PIN, navigate to the 'Security' page and locate the 'Transaction UPI PIN' card. It is required to authorize money transfers.";
+    } else if (lower.includes("saga") || lower.includes("rollback")) {
+      responseText = "A Saga coordinates distributed transactions. It debits the source account, credits the target, and triggers compensations (refunds) if a step fails.";
+    } else if (lower.includes("upi") || lower.includes("vpa") || lower.includes("handle")) {
+      responseText = "A UPI VPA (Virtual Payment Address) resolves handles like username@aura. Register VPAs in 'UPI Management' and assign a default clearing account.";
+    }
+
     setTimeout(() => {
       setChatMessages((prev) => [
         ...prev,
-        { sender: "agent", text: "Understood. The simulation environment is running on port 8000. Try debiting/crediting your account details to test." }
+        { sender: "agent", text: responseText, bankOptions }
       ]);
-    }, 1200);
+    }, 800);
+  };
+
+  const triggerBotAnswer = (questionText, topicKey) => {
+    setChatMessages((prev) => [...prev, { sender: "user", text: questionText }]);
+    
+    const responses = {
+      accounts: "To link a bank account, go to the 'Accounts' page, click 'Link Bank Account', choose a bank (SBI, HDFC, etc.) and enter an opening balance.",
+      pin: "To set or reset your 4-digit UPI PIN, navigate to the 'Security' page and locate the 'Transaction UPI PIN' card. It is required to authorize money transfers.",
+      saga: "A Saga coordinates distributed transactions. It debits the source account, credits the target, and triggers compensations (refunds) if a step fails.",
+      upi: "A UPI VPA (Virtual Payment Address) resolves handles like username@aura. Register VPAs in 'UPI Management' and assign a default clearing account.",
+      status: "Select a bank to check its current simulation status singly:"
+    };
+
+    setTimeout(() => {
+      setChatMessages((prev) => [
+        ...prev,
+        { 
+          sender: "agent", 
+          text: responses[topicKey], 
+          bankOptions: topicKey === "status" ? ["SBI", "HDFC", "ICICI", "AXIS", "PNB", "KOTAK", "BOB"] : null 
+        }
+      ]);
+    }, 800);
+  };
+
+  const checkSingleBankStatus = (bank) => {
+    setChatMessages((prev) => [...prev, { sender: "user", text: `Check ${bank} Status` }]);
+    
+    setTimeout(() => {
+      const bankStatuses = {
+        SBI: "State Bank of India Simulator is online. Status: Operational (100% SLA). Clearing routes are stable.",
+        HDFC: "HDFC Bank Simulator is online. Status: Operational (99.98% SLA). Direct settlement routes active.",
+        ICICI: "ICICI Bank Simulator is online. Status: Operational (100% SLA). Instant UPI settlement is active.",
+        AXIS: "Axis Bank Simulator is online. Status: Operational (99.95% SLA). Clearing queue latency is nominal.",
+        PNB: "Punjab National Bank Simulator is online. Status: Operational (99.91% SLA). Regional routers active.",
+        KOTAK: "Kotak Mahindra Bank Simulator is online. Status: Operational (99.99% SLA). Settlement services active.",
+        BOB: "Bank of Baroda Simulator is online. Status: Operational (99.88% SLA). Secondary routers operational."
+      };
+      const base = bankStatuses[bank] || "Simulator is online and operational.";
+      const latency = Math.floor(Math.random() * 15) + 10;
+      const responseText = `${base} Latency: ${latency}ms. Connection status: Healthy.`;
+
+      setChatMessages((prev) => [
+        ...prev,
+        { sender: "agent", text: responseText }
+      ]);
+    }, 800);
   };
 
   return (
@@ -192,12 +274,12 @@ export default function HelpPage() {
       {/* LIVE CHAT SIMULATOR MODAL */}
       <AnimatePresence>
         {chatOpen && (
-          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:justify-end p-4 bg-black/60 backdrop-blur-sm sm:bg-transparent sm:backdrop-blur-none pointer-events-none">
+          <div className="fixed inset-0 z-50 flex items-end justify-center sm:justify-end p-4 sm:p-6 bg-black/60 backdrop-blur-sm sm:bg-transparent sm:backdrop-blur-none pointer-events-none">
             <motion.div 
               initial={{ y: 50, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: 50, opacity: 0 }}
-              className="pointer-events-auto w-full max-w-sm rounded-3xl glass-panel p-4 shadow-2xl border border-white/10 flex flex-col h-96 relative bottom-6 right-6"
+              className="pointer-events-auto w-full max-w-sm rounded-3xl glass-panel p-4 shadow-2xl border border-white/10 flex flex-col h-96"
             >
               {/* Header */}
               <div className="flex items-center justify-between border-b border-white/5 pb-2.5">
@@ -215,17 +297,72 @@ export default function HelpPage() {
                 {chatMessages.map((msg, i) => {
                   const isAgent = msg.sender === "agent";
                   return (
-                    <div key={i} className={`flex ${isAgent ? "justify-start" : "justify-end"}`}>
+                    <div key={i} className={`flex flex-col ${isAgent ? "items-start" : "items-end"}`}>
                       <div className={`p-3 rounded-2xl max-w-[80%] leading-relaxed ${
                         isAgent 
                           ? "bg-white/5 border border-white/5 text-white" 
                           : "gradient-primary text-white"
                       }`}>
-                        {msg.text}
+                        <div>{msg.text}</div>
+                        
+                        {/* Inline Bank Status Pills */}
+                        {isAgent && msg.bankOptions && (
+                          <div className="flex flex-wrap gap-1.5 mt-2.5 pt-2.5 border-t border-white/5">
+                            {msg.bankOptions.map((bank) => (
+                              <button
+                                key={bank}
+                                type="button"
+                                onClick={() => checkSingleBankStatus(bank)}
+                                className="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-brand-primary border border-white/10 hover:border-brand-primary text-[9px] text-white font-semibold transition-all active:scale-95"
+                              >
+                                {bank}
+                              </button>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     </div>
                   );
                 })}
+              </div>
+
+              {/* Quick Questions Pills */}
+              <div className="flex flex-wrap gap-1.5 pb-2 border-t border-white/5 pt-2 px-1">
+                <button 
+                  type="button" 
+                  onClick={() => triggerBotAnswer("How to link a bank account?", "accounts")}
+                  className="px-2.5 py-1 rounded-full bg-white/5 border border-white/10 hover:bg-brand-primary/10 hover:border-brand-primary/30 text-[9px] text-brand-muted hover:text-white transition-all"
+                >
+                  Link Account?
+                </button>
+                <button 
+                  type="button" 
+                  onClick={() => triggerBotAnswer("How to setup UPI PIN?", "pin")}
+                  className="px-2.5 py-1 rounded-full bg-white/5 border border-white/10 hover:bg-brand-primary/10 hover:border-brand-primary/30 text-[9px] text-brand-muted hover:text-white transition-all"
+                >
+                  Setup UPI PIN?
+                </button>
+                <button 
+                  type="button" 
+                  onClick={() => triggerBotAnswer("What is a Saga?", "saga")}
+                  className="px-2.5 py-1 rounded-full bg-white/5 border border-white/10 hover:bg-brand-primary/10 hover:border-brand-primary/30 text-[9px] text-brand-muted hover:text-white transition-all"
+                >
+                  What is Saga?
+                </button>
+                <button 
+                  type="button" 
+                  onClick={() => triggerBotAnswer("What is a VPA/UPI ID?", "upi")}
+                  className="px-2.5 py-1 rounded-full bg-white/5 border border-white/10 hover:bg-brand-primary/10 hover:border-brand-primary/30 text-[9px] text-brand-muted hover:text-white transition-all"
+                >
+                  What is VPA?
+                </button>
+                <button 
+                  type="button" 
+                  onClick={() => triggerBotAnswer("Check Bank Statuses", "status")}
+                  className="px-2.5 py-1 rounded-full bg-white/5 border border-white/10 hover:bg-brand-primary/10 hover:border-brand-primary/30 text-[9px] text-brand-muted hover:text-white transition-all"
+                >
+                  Bank Status?
+                </button>
               </div>
 
               {/* Chat Input form */}

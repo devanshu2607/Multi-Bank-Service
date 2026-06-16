@@ -119,7 +119,7 @@ export default function AccountsPage() {
           <Building size={48} className="text-brand-muted animate-bounce" />
           <h3 className="text-lg font-bold text-white">No bank accounts linked</h3>
           <p className="text-brand-muted text-xs leading-relaxed max-w-sm">
-            AuraBank simulates real bank clearings. To transfer funds or register UPI IDs, you must first link an account with starting balances.
+            Zero simulates real bank clearings. To transfer funds or register UPI IDs, you must first link an account with starting balances.
           </p>
           <button 
             onClick={() => setShowModal(true)}

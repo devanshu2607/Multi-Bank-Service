@@ -4,6 +4,7 @@ import { useToast } from "../components/layouts/DashboardLayout";
 import { authApi } from "../services/api";
 import { motion, AnimatePresence } from "framer-motion";
 import { User, Mail, Phone, Calendar, Landmark, ShieldCheck, Save, Clock, Lock, Eye, EyeOff, X } from "lucide-react";
+import Logo from "../components/Logo";
 
 export default function ProfilePage() {
   const { user, updateProfile } = useAuth();
@@ -97,7 +98,7 @@ export default function ProfilePage() {
 
             <div className="w-full grid grid-cols-2 gap-4 text-xs font-medium border-t border-white/5 pt-4 mt-6">
               <div className="p-3 bg-white/[0.02] border border-white/5 rounded-2xl">
-                <Landmark className="text-brand-secondary mx-auto mb-1.5" size={16} />
+                <Logo className="text-green-600 dark:text-brand-secondary mx-auto mb-1.5" size={16} />
                 <span className="text-[9px] text-brand-muted uppercase block">Linked Accounts</span>
                 <span className="text-white text-xs font-bold mt-1 block">Active Simulator</span>
               </div>
