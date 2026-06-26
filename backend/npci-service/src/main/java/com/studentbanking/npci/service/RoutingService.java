@@ -34,7 +34,7 @@ public class RoutingService {
     ) {
         this.routeMappingRepository = routeMappingRepository;
         this.npciPaymentEventProducer = npciPaymentEventProducer;
-        this.upiRestClient = RestClient.builder().baseUrl(upiServiceUrl).build();
+        this.upiRestClient = RestClient.builder().baseUrl(upiServiceUrl).build();   
         this.bankRestClient = RestClient.builder().baseUrl(bankServiceUrl).build();
     }
 
@@ -45,7 +45,7 @@ public class RoutingService {
         routeMappingRepository.findBySourceIdentifierAndTargetIdentifierAndRouteType(
                 request.sourceIdentifier(),
                 request.targetIdentifier(),
-                request.routeType()
+                request.routeType() 
         ).orElseGet(() -> {
             RouteMapping mapping = new RouteMapping();
             mapping.setSourceIdentifier(request.sourceIdentifier());
