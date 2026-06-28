@@ -2,6 +2,14 @@
 
 This repo is now a **deployable microservice foundation** for a banking + UPI style system.
 
+https://github.com/user-attachments/assets/fa1462e8-daf2-4210-993d-48c59c280202
+https://github.com/user-attachments/assets/2ec4709a-b9f5-4930-8f82-9253a31bbd4d
+
+
+
+
+
+
 It is not yet a finished production banking product, but it is no longer just a folder scaffold either. The backend now has real persistence-backed flows across the main services, while still staying simple enough to explain as a student-built project.
 
 ## Current architecture
